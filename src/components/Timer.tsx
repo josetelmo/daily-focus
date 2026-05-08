@@ -12,7 +12,6 @@ export default function Timer({ selectedActivity }: { selectedActivity: Activity
   const [isActive, setIsActive] = useState(false);
   const [cycles, setCycles] = useState(0);
 
-  // Keep a ref of current activity for closure issues
   const selectedActivityRef = useRef(selectedActivity);
   useEffect(() => {
     selectedActivityRef.current = selectedActivity;
@@ -21,7 +20,6 @@ export default function Timer({ selectedActivity }: { selectedActivity: Activity
   const soundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Create an audio element for the alarm
     soundRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
   }, []);
 
@@ -63,35 +61,30 @@ export default function Timer({ selectedActivity }: { selectedActivity: Activity
       
       const activity = selectedActivityRef.current;
       
-      // Update Activity
       if (activity) {
         updateActivity(activity.id, {
           completedPomodoros: activity.completedPomodoros + 1,
           status: activity.status === 'pendente' ? 'em_andamento' : activity.status
         });
         
-        // Register Session
         addSession({
           activityId: activity.id,
           activityTitle: activity.title,
           duration: settings.focusDuration
         });
       } else {
-        // Register Unlinked Session
         addSession({
-          activityTitle: 'Sessão sem tarefa',
+          activityTitle: 'Sessão livre',
           duration: settings.focusDuration
         });
       }
 
-      // Determine next break
       if (newCycles % settings.cyclesBeforeLongBreak === 0) {
         setMode('longBreak');
       } else {
         setMode('shortBreak');
       }
     } else {
-      // Break is over, back to focus
       setMode('focus');
     }
   };
@@ -117,7 +110,7 @@ export default function Timer({ selectedActivity }: { selectedActivity: Activity
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    return `${m.toString().padStart(2, '0')} : ${s.toString().padStart(2, '0')}`;
   };
 
   const totalTime = mode === 'focus' 
@@ -129,96 +122,64 @@ export default function Timer({ selectedActivity }: { selectedActivity: Activity
   const progress = ((totalTime - timeLeft) / totalTime) * 100;
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl p-lg shadow-sm flex flex-col items-center justify-center border border-outline-variant/20 relative w-full h-full min-h-[400px]">
+    <div className="bg-white rounded-2xl shadow-sm border border-[#ffdad6] flex flex-col items-center justify-center p-8 relative w-full h-full min-h-[400px]">
       
-      <div className="flex gap-sm mb-lg bg-surface-container p-1 rounded-full">
-        <button
-          onClick={() => { setIsActive(false); setMode('focus'); }}
-          className={`px-sm py-1 rounded-full font-label-bold text-sm transition-all ${mode === 'focus' ? 'bg-primary text-on-primary shadow' : 'text-on-surface-variant hover:text-on-surface'}`}
-        >
-          Foco
-        </button>
-        <button
-          onClick={() => { setIsActive(false); setMode('shortBreak'); }}
-          className={`px-sm py-1 rounded-full font-label-bold text-sm transition-all ${mode === 'shortBreak' ? 'bg-secondary text-on-secondary shadow' : 'text-on-surface-variant hover:text-on-surface'}`}
-        >
-          Pausa Curta
-        </button>
-        <button
-          onClick={() => { setIsActive(false); setMode('longBreak'); }}
-          className={`px-sm py-1 rounded-full font-label-bold text-sm transition-all ${mode === 'longBreak' ? 'bg-secondary text-on-secondary shadow' : 'text-on-surface-variant hover:text-on-surface'}`}
-        >
-          Pausa Longa
-        </button>
+      <div className="flex items-center gap-4 mb-4">
+        <span className={`px-4 py-1 rounded-full text-sm font-bold text-white ${mode === 'focus' ? 'bg-[#d32f2f]' : 'bg-[#005faf]'}`}>
+          {mode === 'focus' ? 'Foco' : mode === 'shortBreak' ? 'Pausa Curta' : 'Pausa Longa'}
+        </span>
+        <span className="text-gray-500 font-medium">Ciclos: {cycles}</span>
       </div>
 
-      <div className="relative w-64 h-64 flex flex-col items-center justify-center mb-lg">
-        <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-          <circle
-            className="text-surface-container-highest"
-            cx="50%"
-            cy="50%"
-            fill="none"
-            r="48%"
-            stroke="currentColor"
-            strokeWidth="8"
-          />
-          <circle
-            className={mode === 'focus' ? 'text-primary transition-all duration-1000' : 'text-secondary transition-all duration-1000'}
-            cx="50%"
-            cy="50%"
-            fill="none"
-            r="48%"
-            stroke="currentColor"
-            strokeDasharray={`${2 * Math.PI * 48}%`}
-            strokeDashoffset={`${2 * Math.PI * 48 * (1 - progress / 100)}%`}
-            strokeWidth="8"
-            strokeLinecap="round"
-          />
-        </svg>
-        <span className="font-display text-display text-on-surface z-10 transition-all">
+      <div className="mb-8 text-center truncate w-full px-8">
+        <span className="text-gray-500 mr-2">Em foco:</span>
+        <span className="font-semibold text-gray-900 truncate">
+          {selectedActivity ? selectedActivity.title : 'Sessão livre'}
+        </span>
+      </div>
+
+      <div className="flex flex-col items-center justify-center mb-10 w-full px-12">
+        <span className="font-display font-extrabold text-[100px] leading-tight text-[#0f172a] tracking-tight transition-all tabular-nums">
           {formatTime(timeLeft)}
         </span>
-        <span className="font-label-bold text-on-surface-variant mt-2 tracking-widest uppercase text-xs z-10">
-          {mode === 'focus' ? 'Foque' : mode === 'shortBreak' ? 'Relaxe' : 'Descanse'}
-        </span>
+        
+        <div className="w-full max-w-md h-3 bg-gray-100 rounded-full mt-6 overflow-hidden">
+          <div 
+            className={`h-full rounded-full transition-all duration-1000 ${mode === 'focus' ? 'bg-[#0f172a]' : 'bg-[#005faf]'}`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
 
-      <div className="flex items-center gap-md">
+      <div className="flex items-center gap-4">
         <button
           onClick={toggleTimer}
-          className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all ${
-            mode === 'focus' ? 'bg-primary text-on-primary' : 'bg-secondary text-on-secondary'
+          className={`flex items-center gap-2 px-8 py-3 rounded-xl font-label-bold text-white transition-all shadow-sm ${
+            mode === 'focus' ? 'bg-[#d32f2f] hover:bg-[#ba1a1a]' : 'bg-[#005faf] hover:bg-[#004786]'
           }`}
         >
-          {isActive ? <Pause size={28} className="fill-current" /> : <Play size={28} className="fill-current ml-1" />}
+          {isActive ? <Pause size={20} className="fill-current" /> : <Play size={20} className="fill-current" />}
+          {isActive ? 'Pausar' : mode === 'focus' ? 'Iniciar' : 'Começar Pausa'}
         </button>
         
         <button
           onClick={resetTimer}
-          className="w-12 h-12 rounded-full border-2 border-outline-variant text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high active:scale-95 transition-all"
-          title="Reiniciar"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-all font-label-bold shadow-sm"
         >
-          <RotateCcw size={20} />
+          <RotateCcw size={18} />
+          Reiniciar
         </button>
 
         {mode !== 'focus' && (
           <button
             onClick={skipBreak}
-            className="w-12 h-12 rounded-full border-2 border-outline-variant text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high active:scale-95 transition-all"
-            title="Pular pausa"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-all font-label-bold shadow-sm"
           >
-            <SkipForward size={20} />
+            <SkipForward size={18} />
+            Pular
           </button>
         )}
       </div>
-
-      {selectedActivity && mode === 'focus' && (
-        <div className="mt-md text-center max-w-xs truncate">
-          <p className="font-label-sm text-on-surface-variant uppercase mb-1">Trabalhando em:</p>
-          <p className="font-body-md text-on-surface font-semibold truncate">{selectedActivity.title}</p>
-        </div>
-      )}
     </div>
   );
 }

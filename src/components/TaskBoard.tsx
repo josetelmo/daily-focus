@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Activity, Priority } from '../types';
-import { Plus, Play, MoreVertical, Trash2, CheckCircle, Circle, Edit2 } from 'lucide-react';
+import { Plus, Play, Trash2, CheckCircle, Circle, Edit2 } from 'lucide-react';
 
 export default function TaskBoard({ onSelectTask, selectedTaskId }: { onSelectTask: (activity: Activity | null) => void, selectedTaskId: string | null }) {
   const { activities, addActivity, updateActivity, deleteActivity } = useAppContext();
   const [isAdding, setIsAdding] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<Priority>('media');
   const [newTaskPomodoros, setNewTaskPomodoros] = useState(1);
 
@@ -16,11 +17,13 @@ export default function TaskBoard({ onSelectTask, selectedTaskId }: { onSelectTa
 
     addActivity({
       title: newTaskTitle,
+      description: newTaskDescription,
       priority: newTaskPriority,
       estimatedPomodoros: newTaskPomodoros,
     });
 
     setNewTaskTitle('');
+    setNewTaskDescription('');
     setNewTaskPriority('media');
     setNewTaskPomodoros(1);
     setIsAdding(false);
@@ -28,9 +31,17 @@ export default function TaskBoard({ onSelectTask, selectedTaskId }: { onSelectTa
 
   const getPriorityColor = (priority: Priority) => {
     switch (priority) {
-      case 'alta': return 'text-primary bg-primary/10 border-primary/20';
-      case 'media': return 'text-secondary bg-secondary/10 border-secondary/20';
-      case 'baixa': return 'text-on-surface-variant bg-surface-container border-outline-variant/20';
+      case 'alta': return 'text-[#c4461c] bg-[#fff3ef]';
+      case 'media': return 'text-[#a22e02] bg-[#ffdbd0]';
+      case 'baixa': return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'concluida': return 'Concluída';
+      case 'em_andamento': return 'Em andamento';
+      default: return 'Pendente';
     }
   };
 
@@ -43,125 +54,150 @@ export default function TaskBoard({ onSelectTask, selectedTaskId }: { onSelectTa
   });
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 p-md flex flex-col h-full min-h-[400px]">
-      <div className="flex justify-between items-center mb-md">
-        <h2 className="font-headline-md text-on-surface">Tarefas do Dia</h2>
+    <div className='flex flex-col h-full'>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="font-display text-xl font-bold text-gray-900">Atividades</h2>
         {!isAdding && (
           <button
             onClick={() => setIsAdding(true)}
-            className="flex items-center gap-xs px-sm py-xs bg-primary/10 text-primary rounded-lg font-label-bold hover:bg-primary/20 transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#d32f2f] text-white rounded-lg font-label-bold text-sm hover:bg-[#ba1a1a] transition-colors"
           >
-            <Plus size={18} />
+            <Plus size={16} />
             Nova
           </button>
         )}
       </div>
 
       {isAdding && (
-        <form onSubmit={handleAddTask} className="mb-md p-md bg-surface border border-outline-variant rounded-lg space-y-sm animate-in fade-in slide-in-from-top-2">
+        <form onSubmit={handleAddTask} className="mb-6 p-4 bg-white border border-gray-200 rounded-xl space-y-4 shadow-sm animate-in fade-in slide-in-from-top-2">
           <input
             type="text"
-            placeholder="O que você precisa fazer?"
+            placeholder="Título da atividade"
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
-            className="w-full bg-surface-container-lowest border border-outline-variant rounded p-sm font-body-md text-on-surface focus:outline-none focus:border-primary transition-colors"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-[#d32f2f] focus:ring-1 focus:ring-[#d32f2f] transition-colors"
             autoFocus
           />
-          <div className="flex gap-sm items-center">
+          <textarea
+            placeholder="Descrição (opcional)"
+            value={newTaskDescription}
+            onChange={(e) => setNewTaskDescription(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:border-[#d32f2f] focus:ring-1 focus:ring-[#d32f2f] transition-colors"
+            rows={2}
+          />
+          <div className="flex gap-4 items-center">
             <select
               value={newTaskPriority}
               onChange={(e) => setNewTaskPriority(e.target.value as Priority)}
-              className="bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm text-on-surface focus:outline-none focus:border-primary"
+              className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm text-gray-700 focus:outline-none focus:border-[#d32f2f]"
             >
-              <option value="baixa">Baixa</option>
-              <option value="media">Média</option>
-              <option value="alta">Alta</option>
+              <option value="baixa">Prioridade Baixa</option>
+              <option value="media">Prioridade Média</option>
+              <option value="alta">Prioridade Alta</option>
             </select>
             
-            <div className="flex items-center gap-2 bg-surface-container-lowest border border-outline-variant rounded px-2">
-              <span className="text-sm text-on-surface-variant">Est. Pomodoros:</span>
+            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5">
+              <span className="text-sm text-gray-500">Pomodoros:</span>
               <input 
                 type="number" 
                 min="1" 
                 max="10" 
                 value={newTaskPomodoros}
                 onChange={(e) => setNewTaskPomodoros(parseInt(e.target.value) || 1)}
-                className="w-12 p-1 text-center bg-transparent focus:outline-none"
+                className="w-12 text-center bg-transparent focus:outline-none text-sm font-medium"
               />
             </div>
           </div>
-          <div className="flex justify-end gap-sm pt-2">
-            <button type="button" onClick={() => setIsAdding(false)} className="px-sm py-1 font-label-bold text-on-surface-variant hover:text-on-surface">
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={() => setIsAdding(false)} className="px-4 py-2 font-label-bold text-sm text-gray-500 hover:text-gray-800 transition-colors">
               Cancelar
             </button>
-            <button type="submit" className="px-sm py-1 bg-primary text-on-primary rounded font-label-bold">
+            <button type="submit" className="px-4 py-2 bg-[#d32f2f] text-white rounded-lg font-label-bold text-sm hover:bg-[#ba1a1a] transition-colors">
               Salvar
             </button>
           </div>
         </form>
       )}
 
-      <div className="flex-1 overflow-y-auto pr-2 space-y-2">
+      <div className="flex-1 overflow-y-auto space-y-4">
         {sortedActivities.length === 0 && !isAdding ? (
-          <div className="text-center py-xl text-on-surface-variant">
-            <p className="font-body-md">Nenhuma tarefa para hoje.</p>
-            <p className="font-label-sm mt-1">Adicione uma tarefa para começar.</p>
+          <div className="text-center py-12 text-gray-400 bg-white rounded-xl border border-dashed border-gray-200">
+            <p className="text-sm">Nenhuma tarefa para hoje.</p>
           </div>
         ) : (
           sortedActivities.map(activity => (
             <div 
               key={activity.id} 
-              className={`flex items-center gap-sm p-sm rounded-lg border group transition-all ${
+              className={`p-4 rounded-xl border transition-all ${
                 activity.status === 'concluida' 
-                  ? 'bg-surface-container/50 border-transparent opacity-60' 
+                  ? 'bg-gray-50 border-gray-200 opacity-60' 
                   : selectedTaskId === activity.id 
-                  ? 'bg-primary/5 border-primary shadow-sm' 
-                  : 'bg-surface border-outline-variant/30 hover:border-outline-variant'
+                  ? 'bg-white border-[#d32f2f] shadow-sm' 
+                  : 'bg-white border-gray-200 hover:border-gray-300'
               }`}
             >
-              <button 
-                onClick={() => updateActivity(activity.id, { status: activity.status === 'concluida' ? 'pendente' : 'concluida' })}
-                className="text-on-surface-variant hover:text-secondary flex-shrink-0"
-              >
-                {activity.status === 'concluida' ? <CheckCircle size={22} className="text-secondary" /> : <Circle size={22} />}
-              </button>
-              
-              <div className="flex-1 min-w-0 flex flex-col cursor-default">
-                <span className={`font-body-md truncate ${activity.status === 'concluida' ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>
+              <div className="flex justify-between items-start gap-4 mb-3">
+                <h3 className={`font-semibold text-lg leading-tight ${activity.status === 'concluida' ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                   {activity.title}
-                </span>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${getPriorityColor(activity.priority)}`}>
-                    {activity.priority}
-                  </span>
-                  <span className="text-xs text-on-surface-variant flex items-center gap-1">
-                    {activity.completedPomodoros} / {activity.estimatedPomodoros} 🍅
-                  </span>
+                </h3>
+                
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {activity.status !== 'concluida' && (
+                    <button
+                      onClick={() => onSelectTask(selectedTaskId === activity.id ? null : activity)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        selectedTaskId === activity.id 
+                          ? 'bg-gray-100 text-gray-800' 
+                          : 'bg-[#d32f2f] text-white hover:bg-[#ba1a1a]'
+                      }`}
+                    >
+                      <Play size={14} className={selectedTaskId !== activity.id ? "fill-current" : ""} />
+                      {selectedTaskId === activity.id ? 'Pausar' : 'Iniciar foco'}
+                    </button>
+                  )}
+                  
+                  <button 
+                    onClick={() => updateActivity(activity.id, { status: activity.status === 'concluida' ? 'pendente' : 'concluida' })}
+                    className="p-1.5 text-gray-400 hover:text-green-600 rounded-full hover:bg-gray-100 transition-colors"
+                    title={activity.status === 'concluida' ? 'Desmarcar' : 'Concluir'}
+                  >
+                    <CheckCircle size={18} className={activity.status === 'concluida' ? 'text-green-600' : ''} />
+                  </button>
+                  
+                  <button 
+                    className="p-1.5 text-gray-400 hover:text-blue-600 rounded-full hover:bg-gray-100 transition-colors"
+                    title="Editar"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  
+                  <button 
+                    onClick={() => deleteActivity(activity.id)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 rounded-full hover:bg-gray-100 transition-colors"
+                    title="Excluir"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
 
-              {activity.status !== 'concluida' && (
-                <button
-                  onClick={() => onSelectTask(selectedTaskId === activity.id ? null : activity)}
-                  className={`p-2 rounded-full flex-shrink-0 transition-colors ${
-                    selectedTaskId === activity.id 
-                      ? 'bg-primary text-on-primary' 
-                      : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-primary'
-                  }`}
-                  title={selectedTaskId === activity.id ? "Remover do Foco" : "Focar nesta tarefa"}
-                >
-                  <Play size={18} className={selectedTaskId === activity.id ? "fill-current" : ""} />
-                </button>
+              <div className="flex gap-2 mb-3">
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${getPriorityColor(activity.priority)}`}>
+                  {activity.priority}
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold text-gray-600 border border-gray-200">
+                  {getStatusLabel(activity.status)}
+                </span>
+              </div>
+
+              {activity.description && (
+                <p className="text-gray-500 text-sm mb-3">
+                  {activity.description}
+                </p>
               )}
-              
-              <div className="relative flex items-center">
-                <button 
-                  onClick={() => deleteActivity(activity.id)}
-                  className="p-2 text-on-surface-variant hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Excluir"
-                >
-                  <Trash2 size={18} />
-                </button>
+
+              <div className="text-sm font-medium text-gray-500">
+                Pomodoros: <strong className="text-gray-900">{activity.completedPomodoros}</strong> / {activity.estimatedPomodoros}
               </div>
             </div>
           ))
